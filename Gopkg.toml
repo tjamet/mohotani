@@ -24,3 +24,7 @@
   name = "github.com/prasmussen/gandi-api"
   branch = "live_dns"
   source = "github.com/tjamet/gandi-api"
+
+[[constraint]]
+  name = "github.com/docopt/docopt-go"
+  version = "0.6.2"

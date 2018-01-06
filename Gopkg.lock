@@ -8,6 +8,12 @@
   version = "v1.1.0"
 
 [[projects]]
+  name = "github.com/docopt/docopt-go"
+  packages = ["."]
+  revision = "784ddc588536785e7299f7272f39101f7faccc3f"
+  version = "0.6.2"
+
+[[projects]]
   name = "github.com/google/uuid"
   packages = ["."]
   revision = "064e2069ce9c359c118179501254f67d7d37ba24"
@@ -47,6 +53,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "69beb13ae6719b0dabb8f0984788a5bfdcc506407b7c9cdf1e7ce6b575ad8718"
+  inputs-digest = "fab6ccaf2ff729de8a84956e07ad55f4708212f670f6862bda82e57e04b0c2de"
   solver-name = "gps-cdcl"
   solver-version = 1
