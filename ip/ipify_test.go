@@ -19,7 +19,7 @@ func (t *testHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(t.response))
 }
 
-func TestResolve(t *testing.T) {
+func TestResolveIPIFY(t *testing.T) {
 	r := NewIPify()
 	ips, err := r.Resolve()
 	assert.NoError(t, err)
