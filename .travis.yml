@@ -1,5 +1,7 @@
 language: go
-
+os:
+  - linux
+  - osx
 go:
   - 1.x
   - 1.6
@@ -16,3 +18,12 @@ script:
   - go build -o mohotani-$(uname -s)-$(uname -m) github.com/tjamet/mohotani/cli/mohotani
   - cat mohotani-$(uname -s)-$(uname -m) | shasum -a 256 | awk '{print $1}' > mohotani-$(uname -s)-$(uname -m)-sha256
   - cat mohotani-$(uname -s)-$(uname -m) | shasum -a 1 | awk '{print $1}' > mohotani-$(uname -s)-$(uname -m)-sha1
+deploy:
+  provider: releases
+  api_key:
+    secure: hXYVvN5uSBC1DRIJ+OQXQ56UYN0s8ZEwrjleB/EJh8wJEM/Sufr9cPhBp4yREE3oJBDQIb/P55xbvSifYgTM98P2tUnI7IXLmoPaDaXk2rR4QKm9NzxgmN+ZjPx5sZVYSNafPPrJUGRUZES2qW2BzMwKdpd4bmHSddofWMXC3IzU2Jqt1+nDg6+GCJpR+h7PPMikPplXDTu5wLI0QyuRN3aljyeeGyoxintY6Fypqv6VBkDOFaNWomXMWjEwKBlYhBbZ
+  file: mohotani-*
+  on:
+    repo: tjamet/mohotani
+    tags: true
+    condition: $TRAVIS_GO_VERSION =~ ^1\.9.+$
