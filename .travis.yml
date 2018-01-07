@@ -1,0 +1,15 @@
+language: go
+
+go:
+  - 1.x
+  - 1.6
+  - 1.7
+  - 1.8
+  - 1.9
+  - master
+go_import_path: github.com/tjamet/mohotani
+script:
+  - go list github.com/tjamet/mohotani/... | grep -v vendor | xargs go test -v -race -cover
+  - go build -o mohotani-$(uname -s)-$(uname -m) github.com/tjamet/mohotani/cli/mohotani
+  - cat mohotani-$(uname -s)-$(uname -m) | shasum -a 256 | awk '{print $1}' > mohotani-$(uname -s)-$(uname -m)-sha256
+  - cat mohotani-$(uname -s)-$(uname -m) | shasum -a 1 | awk '{print $1}' > mohotani-$(uname -s)-$(uname -m)-sha1
