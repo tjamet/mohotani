@@ -28,3 +28,7 @@
 [[constraint]]
   name = "github.com/docopt/docopt-go"
   version = "0.6.2"
+
+[[constraint]]
+  name = "github.com/moby/moby"
+  version = "1.13.1"
