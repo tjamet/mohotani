@@ -9,7 +9,9 @@ import (
 	"time"
 
 	"github.com/docopt/docopt-go"
+	"github.com/moby/moby/client"
 	"github.com/tjamet/mohotani/dns/lister"
+	"github.com/tjamet/mohotani/dns/lister/docker"
 	"github.com/tjamet/mohotani/dns/provider"
 	"github.com/tjamet/mohotani/dns/provider/gandi"
 	"github.com/tjamet/mohotani/dns/provider/log_provider"
@@ -119,6 +121,16 @@ func newDomainListener(args map[string]interface{}, ticker <-chan time.Time, met
 			Logger: logger,
 			Poll:   (&lister.Static{Domains: strings.Split(ips.(string), ",")}).List,
 		}
+	case "docker":
+		cl, err := client.NewEnvClient()
+		if err != nil {
+			log.Fatalf("Failed to create docker client: %s", err.Error())
+		}
+		return &listener.PollListener{
+			Ticker: ticker,
+			Logger: logger,
+			Poll:   (&docker.Lister{Client: cl}).List,
+		}
 	default:
 		log.Fatalf("Unknown IP listener %s", method)
 	}
@@ -136,6 +148,10 @@ func main() {
 	|   --log                             Log domain changes only
 	|   --domains.static                  Use a static list of domains to be updated, with domains provided on the command line
 	|   --domains.static.values=<domains> The list of domains to be updated, coma separated values
+	|   --domains.docker                  Use the docker domain lister. The list of domains will be retrieved from containers and services 
+	|                                     using the Host matcher from traefik: https://docs.traefik.io/basics/#matchers
+	|                                     The host connection must be specified by environment variables (DOCKER_*) defined here:
+	|                                     https://docs.docker.com/engine/reference/commandline/cli/#environment-variables
 	|   --ips.static                      Use the static IP resolver, with IPs given on the command line
 	|   --ips.static.values=<ips>         The list of domains to be updated, coma separated valuse
 	|   --ips.ipify                       Use ipify resolver to resolve the public IP address
@@ -156,7 +172,7 @@ func main() {
 	logger := log.New(os.Stdout, "Mohotani: ", log.LstdFlags|log.Llongfile)
 	providerMethod := strings.Replace(oneOf(args, "--gandi", "--log"), "--", "", 1)
 	IPListenerMethod := strings.Replace(oneOf(args, "--ips.static", "--ips.ipify"), "--ips.", "", 1)
-	DomainListenerMethod := strings.Replace(oneOf(args, "--domains.static"), "--domains.", "", 1)
+	DomainListenerMethod := strings.Replace(oneOf(args, "--domains.static", "--domains.docker"), "--domains.", "", 1)
 
 	u := &updater.Updater{
 		Updater:        newDNSUpdater(args, providerMethod, logger),
