@@ -10,32 +10,32 @@ import (
 )
 
 type testDomainClient struct {
-	domains []*gdomain.DomainInfoBase
+	domains []*gdomain.InfoBase
 	err     error
 	record  *testRecordClient
 }
 type testRecordClient struct {
 	status        grecord.Status
 	err           error
-	updatedValues grecord.RecordInfo
+	updatedValues grecord.Info
 	args          []string
 }
 
-func (t *testDomainClient) List() ([]*gdomain.DomainInfoBase, error) {
+func (t *testDomainClient) List() ([]*gdomain.InfoBase, error) {
 	return t.domains, t.err
 }
 func (t *testDomainClient) Records(string) grecord.Manager {
 	return t.record
 }
-func (t *testRecordClient) Create(recordInfo grecord.RecordInfo, args ...string) (*grecord.Status, error) {
+func (t *testRecordClient) Create(recordInfo grecord.Info, args ...string) (*grecord.Status, error) {
 	return nil, nil
 }
-func (t *testRecordClient) Update(recordInfo grecord.RecordInfo, args ...string) (*grecord.Status, error) {
+func (t *testRecordClient) Update(recordInfo grecord.Info, args ...string) (*grecord.Status, error) {
 	t.updatedValues = recordInfo
 	t.args = args
 	return &t.status, t.err
 }
-func (t *testRecordClient) List(args ...string) ([]*grecord.RecordInfo, error) {
+func (t *testRecordClient) List(args ...string) ([]*grecord.Info, error) {
 	return nil, nil
 }
 func (t *testRecordClient) Delete(args ...string) error {
@@ -56,11 +56,11 @@ func TestUpdateError(t *testing.T) {
 	assert.Contains(t, err.Error(), "test.example.com")
 	assert.Contains(t, err.Error(), "base domain")
 
-	c.domains = []*gdomain.DomainInfoBase{
-		&gdomain.DomainInfoBase{
+	c.domains = []*gdomain.InfoBase{
+		&gdomain.InfoBase{
 			Fqdn: "example.cat",
 		},
-		&gdomain.DomainInfoBase{
+		&gdomain.InfoBase{
 			Fqdn: "example.frcat",
 		},
 	}
@@ -72,11 +72,11 @@ func TestUpdateError(t *testing.T) {
 	assert.Contains(t, err.Error(), "test.example.com")
 	assert.Contains(t, err.Error(), "base domain")
 
-	c.domains = []*gdomain.DomainInfoBase{
-		&gdomain.DomainInfoBase{
+	c.domains = []*gdomain.InfoBase{
+		&gdomain.InfoBase{
 			Fqdn: "example.cat",
 		},
-		&gdomain.DomainInfoBase{
+		&gdomain.InfoBase{
 			Fqdn: "example.com",
 		},
 	}
@@ -92,11 +92,11 @@ func TestUpdateError(t *testing.T) {
 	assert.Contains(t, err.Error(), "127.0.0.1")
 	assert.Contains(t, err.Error(), "test error")
 
-	c.record.updatedValues = grecord.RecordInfo{}
+	c.record.updatedValues = grecord.Info{}
 	c.record.err = nil
 	err = gandi.Update("test.example.com", "127.0.0.1")
 	assert.NoError(t, err)
-	assert.Equal(t, grecord.RecordInfo{Values: []string{"127.0.0.1"}}, c.record.updatedValues)
+	assert.Equal(t, grecord.Info{Values: []string{"127.0.0.1"}}, c.record.updatedValues)
 	assert.Equal(t, []string{"test", "A"}, c.record.args)
 }
 

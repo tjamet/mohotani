@@ -74,11 +74,10 @@
   version = "v1.0.0"
 
 [[projects]]
-  branch = "live_dns"
+  branch = "master"
   name = "github.com/prasmussen/gandi-api"
   packages = ["client","live_dns/domain","live_dns/record"]
-  revision = "3f5f84fd855146664502782b59559aab8a108bed"
-  source = "github.com/tjamet/gandi-api"
+  revision = "00637462a528a482a9f3486333be02266bce2086"
 
 [[projects]]
   name = "github.com/stretchr/testify"
@@ -101,6 +100,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "86f766a200106a7143573956406df6fe66e2aa254ef16c072960205ebb8bf152"
+  inputs-digest = "915d824c5c58a966dae3a1dc4ddf1adaf47aab6771e159d54ed0d0ea8786696a"
   solver-name = "gps-cdcl"
   solver-version = 1

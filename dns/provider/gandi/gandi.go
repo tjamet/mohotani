@@ -11,7 +11,7 @@ import (
 )
 
 type domainLister interface {
-	List() ([]*gdomain.DomainInfoBase, error)
+	List() ([]*gdomain.InfoBase, error)
 }
 
 type recordAccessor interface {
@@ -42,7 +42,7 @@ func (g *Gandi) Update(domain string, ips ...string) error {
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprintf("unable to find base domain for '%s'", domain))
 	}
-	var baseDomain *gdomain.DomainInfoBase
+	var baseDomain *gdomain.InfoBase
 	for _, d := range domains {
 		if strings.HasSuffix(domain, d.Fqdn) {
 			baseDomain = d
@@ -60,7 +60,7 @@ func (g *Gandi) Update(domain string, ips ...string) error {
 	if len(r) == 0 {
 		return fmt.Errorf("unable to update the root domain of %s", domain)
 	}
-	_, err = g.domainAccessor.Records(baseDomain.Fqdn).Update(grecord.RecordInfo{Values: ips}, r, grecord.A)
+	_, err = g.domainAccessor.Records(baseDomain.Fqdn).Update(grecord.Info{Values: ips}, r, grecord.A)
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprintf("unable to update record infos for domain '%s' with ips %s", domain, strings.Join(ips, ",")))
 	}
