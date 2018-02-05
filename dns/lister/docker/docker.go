@@ -2,7 +2,6 @@ package docker
 
 import (
 	"context"
-	"fmt"
 	"log"
 
 	"github.com/docker/docker/api/types"
@@ -27,7 +26,6 @@ func (d *Lister) List() ([]string, error) {
 		if err != nil {
 			log.Printf("Failed to extract domain names for container %s, %s", container.Names, err.Error())
 		}
-		fmt.Println(container.Labels, container.ID)
 		for _, domain := range newDomains {
 			domains[domain] = nil
 		}
