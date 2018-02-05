@@ -86,7 +86,7 @@ func newDNSUpdater(args map[string]interface{}, method string, logger listener.L
 		if keyVal != nil {
 			key = keyVal.(string)
 		} else {
-			keyPath := args["--gandi.key-path"]
+			keyPath := args["--gandi.key-file"]
 			if keyPath != nil {
 				f, err := os.Open(keyPath.(string))
 				if err != nil {
@@ -100,7 +100,7 @@ func newDNSUpdater(args map[string]interface{}, method string, logger listener.L
 			}
 		}
 		if key == "" {
-			log.Fatalf("Missing gandi api key, please provide it through --gandi.key or --gandi.key-path")
+			log.Fatalf("Missing gandi api key, please provide it through --gandi.key or --gandi.key-file")
 		}
 		return gandi.New(key)
 	default:
