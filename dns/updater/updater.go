@@ -1,6 +1,8 @@
 package updater
 
 import (
+	"strings"
+
 	"github.com/tjamet/mohotani/dns/provider"
 	"github.com/tjamet/mohotani/listener"
 )
@@ -19,6 +21,8 @@ func (u *Updater) apply(domains, IPs []string) {
 			err := u.Updater.Update(domain, IPs...)
 			if err != nil {
 				u.Logger.Printf("failed to update domain %s: %s", domain, err)
+			} else {
+				u.Logger.Printf("updated domain %s with IPs %s", domain, strings.Join(IPs, ","))
 			}
 		}
 	}
