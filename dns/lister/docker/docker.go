@@ -2,15 +2,24 @@ package docker
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"time"
 
 	"github.com/docker/docker/api/types"
-	"github.com/moby/moby/client"
+	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/client"
 )
 
 // Lister holds a docker client
 type Lister struct {
 	Client *client.Client
+}
+
+func logErrors(t string, c <-chan error) {
+	for e := range c {
+		log.Printf("warning: Got an error while getting %s events: %s", t, e.Error())
+	}
 }
 
 // List implements the Lister interface to list required domains
@@ -51,4 +60,33 @@ func (d *Lister) List() ([]string, error) {
 		domainList = append(domainList, key)
 	}
 	return domainList, nil
+}
+
+// EventTicker proxies a ticker and adds ticks for each container and service events
+func (d *Lister) EventTicker(c <-chan time.Time) <-chan time.Time {
+	f := filters.NewArgs()
+	f.Add("type", "service")
+	serviceMessages, serviceErrors := d.Client.Events(context.Background(), types.EventsOptions{Filters: f})
+	f = filters.NewArgs()
+	f.Add("type", "container")
+	containerMessages, containerErrors := d.Client.Events(context.Background(), types.EventsOptions{Filters: f})
+	go logErrors("service", serviceErrors)
+	go logErrors("container", containerErrors)
+	o := make(chan time.Time)
+	go func() {
+		log.Println("starting docker event ticker")
+		for {
+			select {
+			case m := <-serviceMessages:
+				o <- time.Now()
+				fmt.Printf("Handled event %s: %s %s\n", m.ID, m.Type, m.Status)
+			case m := <-containerMessages:
+				o <- time.Now()
+				fmt.Printf("Handled event %s: %s %s\n", m.ID, m.Type, m.Status)
+			case t := <-c:
+				o <- t
+			}
+		}
+	}()
+	return o
 }

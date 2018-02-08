@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/docker/docker/client"
 	"github.com/docopt/docopt-go"
-	"github.com/moby/moby/client"
 	"github.com/tjamet/mohotani/dns/lister"
 	"github.com/tjamet/mohotani/dns/lister/docker"
 	"github.com/tjamet/mohotani/dns/provider"
@@ -126,10 +126,14 @@ func newDomainListener(args map[string]interface{}, ticker <-chan time.Time, met
 		if err != nil {
 			log.Fatalf("Failed to create docker client: %s", err.Error())
 		}
+		d := &docker.Lister{Client: cl}
+		if args["--domains.docker.watch"].(bool) {
+			ticker = d.EventTicker(ticker)
+		}
 		return &listener.PollListener{
 			Ticker: ticker,
 			Logger: logger,
-			Poll:   (&docker.Lister{Client: cl}).List,
+			Poll:   d.List,
 		}
 	default:
 		log.Fatalf("Unknown IP listener %s", method)
@@ -152,6 +156,7 @@ func main() {
 	|                                     using the Host matcher from traefik: https://docs.traefik.io/basics/#matchers
 	|                                     The host connection must be specified by environment variables (DOCKER_*) defined here:
 	|                                     https://docs.docker.com/engine/reference/commandline/cli/#environment-variables
+	|   --domains.docker.watch            Refresh domain list everytime a container or service is deployed
 	|   --ips.static                      Use the static IP resolver, with IPs given on the command line
 	|   --ips.static.values=<ips>         The list of domains to be updated, coma separated valuse
 	|   --ips.ipify                       Use ipify resolver to resolve the public IP address
