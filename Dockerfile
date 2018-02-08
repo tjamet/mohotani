@@ -7,6 +7,7 @@ COPY ./cli /go/src/github.com/tjamet/mohotani/cli
 COPY ./dns /go/src/github.com/tjamet/mohotani/dns
 COPY ./ip /go/src/github.com/tjamet/mohotani/ip
 COPY ./listener /go/src/github.com/tjamet/mohotani/listener
+COPY ./logger /go/src/github.com/tjamet/mohotani/logger
 
 RUN go build -o /bin/mohotani github.com/tjamet/mohotani/cli/mohotani
 

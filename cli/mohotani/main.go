@@ -18,6 +18,7 @@ import (
 	"github.com/tjamet/mohotani/dns/updater"
 	"github.com/tjamet/mohotani/ip"
 	"github.com/tjamet/mohotani/listener"
+	"github.com/tjamet/mohotani/logger"
 )
 
 func stripAlign(in string) string {
@@ -48,7 +49,7 @@ func oneOf(args map[string]interface{}, keys ...string) string {
 	return provided[0]
 }
 
-func newIPListener(args map[string]interface{}, ticker <-chan time.Time, method string, logger listener.Logger) listener.Listener {
+func newIPListener(args map[string]interface{}, ticker <-chan time.Time, method string, logger logger.Logger) listener.Listener {
 	switch method {
 	case "static":
 		ips := args["--ips.static.values"]
@@ -76,7 +77,7 @@ func newIPListener(args map[string]interface{}, ticker <-chan time.Time, method 
 	return nil
 }
 
-func newDNSUpdater(args map[string]interface{}, method string, logger listener.Logger) provider.Updater {
+func newDNSUpdater(args map[string]interface{}, method string, logger logger.Logger) provider.Updater {
 	switch method {
 	case "log":
 		return &logProvider.Log{}
@@ -109,7 +110,7 @@ func newDNSUpdater(args map[string]interface{}, method string, logger listener.L
 	return nil
 }
 
-func newDomainListener(args map[string]interface{}, ticker <-chan time.Time, method string, logger listener.Logger) listener.Listener {
+func newDomainListener(args map[string]interface{}, ticker <-chan time.Time, method string, logger logger.Logger) listener.Listener {
 	switch method {
 	case "static":
 		ips := args["--domains.static.values"]

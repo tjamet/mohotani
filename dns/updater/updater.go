@@ -5,6 +5,7 @@ import (
 
 	"github.com/tjamet/mohotani/dns/provider"
 	"github.com/tjamet/mohotani/listener"
+	"github.com/tjamet/mohotani/logger"
 )
 
 // Updater his the structure holding the setup for automatic dns records update
@@ -12,7 +13,7 @@ type Updater struct {
 	Updater        provider.Updater
 	IPListener     listener.Listener
 	DomainListener listener.Listener
-	Logger         listener.Logger
+	Logger         logger.Logger
 }
 
 func (u *Updater) apply(domains, IPs []string) {
