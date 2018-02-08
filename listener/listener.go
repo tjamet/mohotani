@@ -39,7 +39,12 @@ type PollListener struct {
 
 // Listen implements the Listener interface and forwards all chandes to out
 func (p *PollListener) Listen(out chan []string) {
-	old := []string{}
+	old, err := p.Poll()
+	if err != nil {
+		p.Logger.Printf("error: failed to resolve ip: %s", err.Error())
+	} else {
+		out <- old
+	}
 	for range p.Ticker {
 		i, err := p.Poll()
 		if err != nil {

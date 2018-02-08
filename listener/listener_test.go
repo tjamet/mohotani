@@ -45,6 +45,9 @@ func TestWatch(t *testing.T) {
 		Poll:   r.Poll,
 	}
 	go listener.Listen(out)
+	pollIPs <- []string{}
+	pollErrs <- nil
+	<-out
 
 	pollIPs <- []string{"value 1"}
 	pollErrs <- nil
