@@ -2,23 +2,24 @@ package docker
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
+	"github.com/tjamet/mohotani/logger"
 )
 
 // Lister holds a docker client
 type Lister struct {
 	Client *client.Client
+	Logger logger.Logger
 }
 
-func logErrors(t string, c <-chan error) {
+func (d *Lister) logErrors(t string, c <-chan error) {
 	for e := range c {
-		log.Printf("warning: Got an error while getting %s events: %s", t, e.Error())
+		d.Logger.Printf("warning: Got an error while getting %s events: %s", t, e.Error())
 	}
 }
 
@@ -33,7 +34,7 @@ func (d *Lister) List() ([]string, error) {
 	for _, container := range containers {
 		newDomains, err := ExtractTraefikDomainsFromLabels(container.Labels)
 		if err != nil {
-			log.Printf("Failed to extract domain names for container %s, %s", container.Names, err.Error())
+			d.Logger.Printf("Failed to extract domain names for container %s, %s", container.Names, err.Error())
 		}
 		for _, domain := range newDomains {
 			domains[domain] = nil
@@ -48,7 +49,7 @@ func (d *Lister) List() ([]string, error) {
 		for _, service := range services {
 			newDomains, err := ExtractTraefikDomainsFromLabels(service.Spec.Labels)
 			if err != nil {
-				log.Printf("Failed to extract domain names for container %s, %s", service.Spec.Name, err.Error())
+				d.Logger.Printf("Failed to extract domain names for container %s, %s", service.Spec.Name, err.Error())
 			}
 			for _, domain := range newDomains {
 				domains[domain] = nil
@@ -70,19 +71,17 @@ func (d *Lister) EventTicker(c <-chan time.Time) <-chan time.Time {
 	f = filters.NewArgs()
 	f.Add("type", "container")
 	containerMessages, containerErrors := d.Client.Events(context.Background(), types.EventsOptions{Filters: f})
-	go logErrors("service", serviceErrors)
-	go logErrors("container", containerErrors)
+	go d.logErrors("service", serviceErrors)
+	go d.logErrors("container", containerErrors)
 	o := make(chan time.Time)
 	go func() {
 		log.Println("starting docker event ticker")
 		for {
 			select {
-			case m := <-serviceMessages:
+			case <-serviceMessages:
 				o <- time.Now()
-				fmt.Printf("Handled event %s: %s %s\n", m.ID, m.Type, m.Status)
-			case m := <-containerMessages:
+			case <-containerMessages:
 				o <- time.Now()
-				fmt.Printf("Handled event %s: %s %s\n", m.ID, m.Type, m.Status)
 			case t := <-c:
 				o <- t
 			}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"strconv"
 	"testing"
@@ -24,6 +25,12 @@ type testDockerDaemon struct {
 	ContainerID        string
 	dockerHostClient   *client.Client
 	dockerDaemonClient *client.Client
+}
+
+type testLogger struct{}
+
+func (t testLogger) Printf(f string, v ...interface{}) {
+	log.Printf(f, v...)
 }
 
 func startContainer(t testing.TB, cl *client.Client, image string, cmd []string, ports []string, privileged bool, labels map[string]string) container.ContainerCreateCreatedBody {
@@ -120,7 +127,10 @@ func TestNoSwarm(t *testing.T) {
 	defer h.stop()
 	startContainer(t, h.dockerDaemonClient, "alpine", []string{"tail", "-f", "/dev/null"}, []string{}, false, map[string]string{"traefik.frontend.rule": "Host: traefik.io, www.traefik.io"})
 	startContainer(t, h.dockerDaemonClient, "alpine", []string{"tail", "-f", "/dev/null"}, []string{}, false, map[string]string{"traefik.frontend.rule": "Host: www.example.com, traefik.io"})
-	lister := Lister{h.dockerDaemonClient}
+	lister := Lister{
+		Client: h.dockerDaemonClient,
+		Logger: testLogger{},
+	}
 	domains, err := lister.List()
 	assert.NoError(t, err)
 	assert.Equal(t, 1, count(domains, "traefik.io"))
@@ -150,7 +160,10 @@ func TestSwarm(t *testing.T) {
 	r, err := h.dockerDaemonClient.ServiceCreate(context.Background(), specs, types.ServiceCreateOptions{})
 	assert.NoError(t, err)
 	fmt.Println(r)
-	lister := Lister{h.dockerDaemonClient}
+	lister := Lister{
+		Client: h.dockerDaemonClient,
+		Logger: testLogger{},
+	}
 	domains, err := lister.List()
 	assert.NoError(t, err)
 	fmt.Println(domains)

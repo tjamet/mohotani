@@ -80,7 +80,9 @@ func newIPListener(args map[string]interface{}, ticker <-chan time.Time, method 
 func newDNSUpdater(args map[string]interface{}, method string, logger logger.Logger) provider.Updater {
 	switch method {
 	case "log":
-		return &logProvider.Log{}
+		return &logProvider.Log{
+			Logger: logger,
+		}
 	case "gandi":
 		keyVal := args["--gandi.key"]
 		key := ""
@@ -127,7 +129,10 @@ func newDomainListener(args map[string]interface{}, ticker <-chan time.Time, met
 		if err != nil {
 			log.Fatalf("Failed to create docker client: %s", err.Error())
 		}
-		d := &docker.Lister{Client: cl}
+		d := &docker.Lister{
+			Client: cl,
+			Logger: logger,
+		}
 		if args["--domains.docker.watch"].(bool) {
 			ticker = d.EventTicker(ticker)
 		}
