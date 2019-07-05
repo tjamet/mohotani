@@ -14,10 +14,12 @@ import (
 	"github.com/tjamet/mohotani/dns/lister/docker"
 	"github.com/tjamet/mohotani/dns/provider"
 	"github.com/tjamet/mohotani/dns/provider/gandi"
-	"github.com/tjamet/mohotani/dns/provider/log_provider"
+	logProvider "github.com/tjamet/mohotani/dns/provider/log_provider"
+	"github.com/tjamet/mohotani/dns/provider/route53"
 	"github.com/tjamet/mohotani/dns/updater"
 	"github.com/tjamet/mohotani/ip"
 	"github.com/tjamet/mohotani/listener"
+	"github.com/tjamet/mohotani/listener/kubernetes"
 	"github.com/tjamet/mohotani/logger"
 )
 
@@ -106,6 +108,8 @@ func newDNSUpdater(args map[string]interface{}, method string, logger logger.Log
 			log.Fatalf("Missing gandi api key, please provide it through --gandi.key or --gandi.key-file")
 		}
 		return gandi.New(key)
+	case "route53":
+		return route53.NewRoute53()
 	default:
 		log.Fatalf("Unknown IP listener %s", method)
 	}
@@ -141,6 +145,8 @@ func newDomainListener(args map[string]interface{}, ticker <-chan time.Time, met
 			Logger: logger,
 			Poll:   d.List,
 		}
+	case "k8s":
+		return kubernetes.NewDomainLister(kubernetes.NewClient(), args["--domains.k8s.class"].(string))
 	default:
 		log.Fatalf("Unknown IP listener %s", method)
 	}
@@ -152,6 +158,7 @@ func main() {
 	|Usage: mohotani [options]
 
 	|Options:
+	|   --route53                         Use route53 API to update DNS records
 	|   --gandi                           Use gandi live DNS API to update DNS records
 	|   --gandi.key=<key>                 The API key to connect to gandi
 	|   --gandi.key-file=<path>           The path of a file containing the API key to connect to gandi
@@ -163,6 +170,8 @@ func main() {
 	|                                     The host connection must be specified by environment variables (DOCKER_*) defined here:
 	|                                     https://docs.docker.com/engine/reference/commandline/cli/#environment-variables
 	|   --domains.docker.watch            Refresh domain list everytime a container or service is deployed
+	|   --domains.k8s                     Use kubernetes API to watch ingresses 
+	|   --domains.k8s.class=<class>       The ingress class to watch domain names on [default: nginx]
 	|   --ips.static                      Use the static IP resolver, with IPs given on the command line
 	|   --ips.static.values=<ips>         The list of domains to be updated, coma separated valuse
 	|   --ips.ipify                       Use ipify resolver to resolve the public IP address
@@ -181,9 +190,9 @@ func main() {
 			|such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".`), err.Error())
 	}
 	logger := log.New(os.Stdout, "Mohotani: ", log.LstdFlags|log.Llongfile)
-	providerMethod := strings.Replace(oneOf(args, "--gandi", "--log"), "--", "", 1)
+	providerMethod := strings.Replace(oneOf(args, "--gandi", "--log", "--route53"), "--", "", 1)
 	IPListenerMethod := strings.Replace(oneOf(args, "--ips.static", "--ips.ipify"), "--ips.", "", 1)
-	DomainListenerMethod := strings.Replace(oneOf(args, "--domains.static", "--domains.docker"), "--domains.", "", 1)
+	DomainListenerMethod := strings.Replace(oneOf(args, "--domains.static", "--domains.docker", "--domains.k8s"), "--domains.", "", 1)
 
 	u := &updater.Updater{
 		Updater:        newDNSUpdater(args, providerMethod, logger),
