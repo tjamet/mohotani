@@ -4,6 +4,7 @@ go 1.12
 
 require (
 	github.com/Microsoft/go-winio v0.4.5 // indirect
+	github.com/aws/aws-sdk-go v1.20.15
 	github.com/docker/distribution v2.6.2+incompatible // indirect
 	github.com/docker/docker v1.13.1
 	github.com/docker/go-connections v0.3.0
@@ -26,7 +27,6 @@ require (
 	google.golang.org/appengine v1.6.1 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	k8s.io/api v0.0.0-20190703205437-39734b2a72fe
-	k8s.io/apimachinery v0.0.0-20190703205208-4cfb76a8bf76
 	k8s.io/client-go v0.0.0-20190704045512-07281898b0f0
 	k8s.io/klog v0.3.3 // indirect
 )
