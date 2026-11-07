@@ -15,7 +15,7 @@ require (
 	github.com/googleapis/gnostic v0.3.0 // indirect
 	github.com/hashicorp/golang-lru v0.5.1 // indirect
 	github.com/kolo/xmlrpc v0.0.0-20150413191830-0826b98aaa29 // indirect
-	github.com/pkg/errors v0.8.0
+	github.com/pkg/errors v0.9.1
 	github.com/prasmussen/gandi-api v0.0.0-20180224132202-58d3d4205661
 	github.com/stevvooe/resumable v0.0.0-20180830230917-22b14a53ba50 // indirect
 	github.com/stretchr/testify v1.3.0
