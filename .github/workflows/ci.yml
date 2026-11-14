@@ -21,5 +21,11 @@ jobs:
       - name: Build
         run: go build ./...
 
+      # TestNoSwarm and TestSwarm start a privileged docker:dind container and
+      # wait for it forever. They skip themselves when the docker host cannot
+      # be reached, so point DOCKER_HOST at nothing: the shared runner must not
+      # run privileged containers.
       - name: Test
-        run: go test -race ./cli/... ./dns/... ./ip/... ./listener/... ./logger/...
+        env:
+          DOCKER_HOST: tcp://127.0.0.1:1
+        run:go test -race ./cli/... ./dns/... ./ip/... ./listener/... ./logger/...
