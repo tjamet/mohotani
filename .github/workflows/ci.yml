@@ -1,0 +1,25 @@
+name: ci
+
+# Runs on the in-cluster Gitea Actions runner. The repo had only a Travis
+# config, so no Gitea check ever ran on a pull request.
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      # The vendor directory is committed: -mod=vendor is the default for it.
+      - name: Build
+        run: go build ./...
+
+      - name: Test
+        run: go test -race ./cli/... ./dns/... ./ip/... ./listener/... ./logger/...

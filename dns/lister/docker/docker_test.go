@@ -11,8 +11,8 @@ import (
 
 	"github.com/docker/go-connections/nat"
 
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	imagetypes "github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/docker/docker/client"
@@ -33,11 +33,11 @@ func (t testLogger) Printf(f string, v ...interface{}) {
 	log.Printf(f, v...)
 }
 
-func startContainer(t testing.TB, cl *client.Client, image string, cmd []string, ports []string, privileged bool, labels map[string]string) container.ContainerCreateCreatedBody {
+func startContainer(t testing.TB, cl *client.Client, image string, cmd []string, ports []string, privileged bool, labels map[string]string) container.CreateResponse {
 	portSet := nat.PortSet{}
 	portMap := nat.PortMap{}
 
-	reader, err := cl.ImagePull(context.Background(), image, types.ImagePullOptions{})
+	reader, err := cl.ImagePull(context.Background(), image, imagetypes.PullOptions{})
 	assert.NoError(t, err)
 	io.Copy(os.Stdout, reader)
 
@@ -58,12 +58,12 @@ func startContainer(t testing.TB, cl *client.Client, image string, cmd []string,
 		Privileged:   true,
 	}
 	networkingConfig := &network.NetworkingConfig{}
-	created, err := cl.ContainerCreate(context.Background(), config, hostConfig, networkingConfig, "")
+	created, err := cl.ContainerCreate(context.Background(), config, hostConfig, networkingConfig, nil, "")
 	assert.NoError(t, err)
-	err = cl.ContainerStart(context.Background(), created.ID, types.ContainerStartOptions{})
+	err = cl.ContainerStart(context.Background(), created.ID, container.StartOptions{})
 	assert.NoError(t, err)
 	go func() {
-		read, err := cl.ContainerLogs(context.Background(), created.ID, types.ContainerLogsOptions{Follow: true, ShowStdout: true, ShowStderr: true})
+		read, err := cl.ContainerLogs(context.Background(), created.ID, container.LogsOptions{Follow: true, ShowStdout: true, ShowStderr: true})
 		assert.NoError(t, err)
 		if err == nil {
 			io.Copy(os.Stdout, read)
@@ -73,7 +73,7 @@ func startContainer(t testing.TB, cl *client.Client, image string, cmd []string,
 }
 
 func startDockerDaemon(t testing.TB) *testDockerDaemon {
-	cl, err := client.NewEnvClient()
+	cl, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	assert.NoError(t, err)
 	info, err := cl.Info(context.Background())
 	if err != nil {
@@ -87,10 +87,10 @@ func startDockerDaemon(t testing.TB) *testDockerDaemon {
 	assert.NoError(t, err)
 	port, err := strconv.Atoi(inspect.NetworkSettings.Ports["2345/tcp"][0].HostPort)
 	assert.NoError(t, err)
-	daemonClient, err := client.NewClient("tcp://localhost:"+inspect.NetworkSettings.Ports["2345/tcp"][0].HostPort, "", nil, map[string]string{})
+	daemonClient, err := client.NewClientWithOpts(client.WithHost("tcp://localhost:"+inspect.NetworkSettings.Ports["2345/tcp"][0].HostPort), client.WithAPIVersionNegotiation())
 
 	for {
-		networks, err := daemonClient.NetworkList(context.Background(), types.NetworkListOptions{})
+		networks, err := daemonClient.NetworkList(context.Background(), network.ListOptions{})
 		if err == nil {
 			if len(networks) > 0 {
 				fmt.Println(networks)
@@ -109,7 +109,7 @@ func startDockerDaemon(t testing.TB) *testDockerDaemon {
 
 func (d *testDockerDaemon) stop() {
 	d.dockerHostClient.ContainerKill(context.Background(), d.ContainerID, "")
-	d.dockerHostClient.ContainerRemove(context.Background(), d.ContainerID, types.ContainerRemoveOptions{RemoveVolumes: true})
+	d.dockerHostClient.ContainerRemove(context.Background(), d.ContainerID, container.RemoveOptions{RemoveVolumes: true})
 }
 
 func count(l []string, k string) int {
@@ -151,13 +151,13 @@ func TestSwarm(t *testing.T) {
 	specs := swarm.ServiceSpec{
 		Annotations: swarm.Annotations{Labels: map[string]string{"traefik.frontend.rule": "Host: swarm.example.com, traefik.io"}},
 		TaskTemplate: swarm.TaskSpec{
-			ContainerSpec: swarm.ContainerSpec{
+			ContainerSpec: &swarm.ContainerSpec{
 				Image:   "alpine",
 				Command: []string{"tail", "-f", "/dev/null"},
 			},
 		},
 	}
-	r, err := h.dockerDaemonClient.ServiceCreate(context.Background(), specs, types.ServiceCreateOptions{})
+	r, err := h.dockerDaemonClient.ServiceCreate(context.Background(), specs, swarm.ServiceCreateOptions{})
 	assert.NoError(t, err)
 	fmt.Println(r)
 	lister := Lister{

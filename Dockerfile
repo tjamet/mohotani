@@ -1,22 +1,22 @@
-FROM golang:1.9.2-alpine as build
+FROM golang:1.26-alpine as build
 
-RUN apk add --no-cache git
+WORKDIR /src
 
-COPY ./vendor /go/src/github.com/tjamet/mohotani/vendor
-COPY ./cli /go/src/github.com/tjamet/mohotani/cli
-COPY ./dns /go/src/github.com/tjamet/mohotani/dns
-COPY ./ip /go/src/github.com/tjamet/mohotani/ip
-COPY ./listener /go/src/github.com/tjamet/mohotani/listener
-COPY ./logger /go/src/github.com/tjamet/mohotani/logger
+COPY go.mod go.sum ./
+COPY ./vendor ./vendor
+COPY ./cli ./cli
+COPY ./dns ./dns
+COPY ./ip ./ip
+COPY ./listener ./listener
+COPY ./logger ./logger
 
-RUN go build -o /bin/mohotani github.com/tjamet/mohotani/cli/mohotani
+RUN CGO_ENABLED=0 go build -o /bin/mohotani ./cli/mohotani
 
-# cannot run the race detecrot on alpine: https://github.com/golang/go/issues/14481
-RUN go list github.com/tjamet/mohotani/... | grep -v vendor | xargs go test -v
+# cannot run the race detector on alpine: https://github.com/golang/go/issues/14481
+RUN go test ./cli/... ./dns/... ./ip/... ./listener/... ./logger/...
 
 
 FROM alpine
 RUN apk add --no-cache ca-certificates
 COPY --from=build /bin/mohotani /bin/mohotani
 ENTRYPOINT ["/bin/mohotani"]
-

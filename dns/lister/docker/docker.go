@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/events"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
 	"github.com/tjamet/mohotani/logger"
@@ -27,14 +29,14 @@ func (d *Lister) logErrors(t string, c <-chan error) {
 // for all containers and services
 func (d *Lister) List() ([]string, error) {
 	domains := map[string]interface{}{}
-	containers, err := d.Client.ContainerList(context.Background(), types.ContainerListOptions{})
+	containers, err := d.Client.ContainerList(context.Background(), container.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
-	for _, container := range containers {
-		newDomains, err := ExtractTraefikDomainsFromLabels(container.Labels)
+	for _, c := range containers {
+		newDomains, err := ExtractTraefikDomainsFromLabels(c.Labels)
 		if err != nil {
-			d.Logger.Printf("Failed to extract domain names for container %s, %s", container.Names, err.Error())
+			d.Logger.Printf("Failed to extract domain names for container %s, %s", c.Names, err.Error())
 		}
 		for _, domain := range newDomains {
 			domains[domain] = nil
@@ -67,10 +69,10 @@ func (d *Lister) List() ([]string, error) {
 func (d *Lister) EventTicker(c <-chan time.Time) <-chan time.Time {
 	f := filters.NewArgs()
 	f.Add("type", "service")
-	serviceMessages, serviceErrors := d.Client.Events(context.Background(), types.EventsOptions{Filters: f})
+	serviceMessages, serviceErrors := d.Client.Events(context.Background(), events.ListOptions{Filters: f})
 	f = filters.NewArgs()
 	f.Add("type", "container")
-	containerMessages, containerErrors := d.Client.Events(context.Background(), types.EventsOptions{Filters: f})
+	containerMessages, containerErrors := d.Client.Events(context.Background(), events.ListOptions{Filters: f})
 	go d.logErrors("service", serviceErrors)
 	go d.logErrors("container", containerErrors)
 	o := make(chan time.Time)
